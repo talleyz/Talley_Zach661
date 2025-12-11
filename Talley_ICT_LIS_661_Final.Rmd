@@ -1,0 +1,238 @@
+---
+title: "Talley_ICT_LIS_661_Final"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Description, Preparation, and Exploration [5 points]
+
+> In the code chunk below, run all the code necessary to load your data and carry out some exploratory data analysis (take note of the questions below). [1 point]
+
+```{r}
+Salary_Data <- read.csv("Salary_Data.csv", check.names = FALSE)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(ggplot2)
+library(infer)
+library(moderndive)
+glimpse(Salary_Data)
+unique(Salary_Data$Gender)
+unique(Salary_Data$`Education Level`)
+
+Salary_Data <- Salary_Data |> 
+  dplyr::filter(Salary > 15000)
+
+head(Salary_Data)
+
+Salary_Data <- Salary_Data |>
+  dplyr::filter(Gender != "Other")
+
+summary_salary <- Salary_Data |>
+group_by(`Education Level`, Gender) |>
+summarize(
+  mean_salary   = round(mean(Salary, na.rm = TRUE), 2),
+  median_salary = round(median(Salary, na.rm = TRUE), 2),
+    sd_salary     = round(sd(Salary, na.rm = TRUE), 2),
+  min_salary    = min(Salary, na.rm = TRUE),
+  max_salary    = max(Salary, na.rm = TRUE),
+  n             = n(),
+  .groups = "drop"
+)
+summary_salary
+
+ggplot(Salary_Data, aes(x = Age, y = Salary)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+labs(x = "Age", y = "Salary", color = "Education Group") +
+  geom_parallel_slopes(se = FALSE)
+
+ggplot(Salary_Data, aes(x = `Years of Experience`, y = Salary)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+labs(x = "Years of Experience", y = "Salary", color = "Education Group") +
+  geom_parallel_slopes(se = FALSE)
+
+summary(lm(Salary ~ Age, data = Salary_Data))
+summary(lm(Salary ~ `Years of Experience`, data = Salary_Data))
+```
+
+
+
+
+> Describe your dataset, including a reference, a description of the data collection procedure, and its size (number of observations and variables). [1 point]
+
+My dataset covers Salary Data for Employed people that have obtained some level of education between high school an PhD. The dataset includes variables such as Age, Gender, Education Level, Job Title, Years of Experience, and of course, Salary. The data was collected from multiple sources, including surveys, job posting sites and other publicly availble sources, according to the authors. The total number of observations collected was 6704, and after accounting for incomplete entries that are deemed unusable, the actual usable number of observations collected was 6699. Also provided as information with the data was the data was sourced from India and the unit of measure is the Indian Rupee, for the salary. Their expected frequency of update was annually, but the data has not been updated in the last 3 years. This data can be accessed at the following website: https://www.kaggle.com/datasets/mohithsairamreddy/salary-data
+
+
+> Explain any tidying and wrangling that you performed on the data and why you took those steps. [1 point]
+
+Throughout this project several different wrangling and tidying will be done to present the data in the best way. In the initial section I filtered to only select people that made over a certain amount, or had a salary value over a certain amount. I chose the amount of $15,000 to remove obvious errors and blank datapoints that could skew the data. After visually looking at the data myself it was very clear that all valid datapoints would be over this number. In addition, I filtered out, for simplicity, the handful of datapoints that listed a gender of "Other". I did verify that all datapoints listed a gender, but as we will see later, it will be easier to interpret if we break it down as either male or female.
+
+> Provide a description of key variables and their summary statistics. What do these summary statistics tell you about the data? [1 point]
+
+The key variables for this dataset are primarily the age, years of experience, Education Level, and Salary. Years of experience is simply discussing how many years a person has in a particular sector of the work force. You can assume that generally older people will have a higher YoE number than younger people but there will be outliers. The other key variable is Salary. Salary is a direct result of one's Education level, Years of Experience, and Age. Using the summary statistics function, a table with some basic mean median min information is provided, giving us some information at a quick glance about this data. For example, we can see that for the mean salary at every education level, Males have a higher salary than females. Another interesting point is that with the higher education levels, being part of Master's degree and PhD's, the Mean Salary is actually lower than the Median Salary. Whereas with the lower education levels, the Mean Salary is higher, suggesting more people make more than the midpoint of the range of salaries. Finally, the Minimum salary doesn't actually change that much throughout the education levels, though we will look at these to be possible outliers with the charts. 
+
+> Explain how you visualized key variables, why you chose those visualizations, and what they tell you about the data. [1 point]
+
+I visualized these key variables by first calculating them by finding the mean, median, max, min, and SD, then publishing the chart with that information. This chart is easy for the end user to read as it breaks the information down into easily digestible information by groups, in this case Education Level. I also ran the head(Salary_Data) to pick a couple random points to break down some basic information as well at random, showing Age, years of experience, and Salary. I used the visualizations I did because I feel like they gave the best quick glance view of the data while also being easy to comprehend, being a simple linear regression chart. These charts tell us that if you break down the data to just age and years of experience, both factor into salary, ignoring all other variables such as gender, and education level. Though, just like with any data, there are outliers. One additional observation with the years of experience graph is a slight flattening of the slope after around 20 years of experience. 
+
+
+# Hypotheses [4 points]
+
+> Describe at least four null hypotheses you wish to test (and four accompanying alternative hypotheses). Explain each hypothesis in detail and in terms of the variables identified above. [4 points]
+
+1a. Null hypothesis: There is no relationship between an employees age and their salary
+
+1b. Alternative Hypothesis: There is a relationship between an employee's age and their salary
+Explanation: This hypothesis tests a relationship between the two variables age and salary. Primarily to see if as you get older, does your salary increase? Most people gain experience as they get older, and maintain their field of work for their entire careers, allowing them to become more valuable as time passes. This hypothesis will test this relationship to confirm or deny this. 
+
+
+
+2a. Null Hypothesis: An employees years of experience has no significant effect on their salary
+
+2b. Alternative hypothesis: Years of experience significantly effects an employees salary
+Explanation: This hypothesis tests a relationship between an employees years of experience and their salary. Most employees stay in their line of work for their entire careers, but not all. This hypothesis will test if the more experienced employees in the field gain a financial advantage over the newer employees.
+
+
+3a. Null Hypothesis: The degree an employee holds has no significant effect on an employees salary
+
+3b. Alternative hypothesis: The degree an employee holds has a significant effect on an employees salary
+Explanation: This hypothesis tests the relationship between the level of education, or degree, an employee has, and their salary. An education may have a significant effect on salary in some fields but may be useless in others. This hypothesis will see how important it actually is. 
+
+
+4a. Null hypothesis: There is no discernible relationship between gender and salary, regardless of other variables
+
+4b. Alternative hypothesis: There is a discernible difference between gender and salary, regardless of other variables
+Explanation: This hypothesis will test the relationship between gender and the salary of an employee. Specifically noting, since the data only included 2 genders, if one gender has an advantage over another. 
+
+
+# Data Analysis [4 points]
+
+> Throughout the semester, we've practiced using inferential statistics to determine: 1) differences in population proportions, 2) differences in population means, and 3) population regression slopes. Explain which of these three applications of inferential statistics is relevant to *each* of your hypotheses and why. [4 points]
+
+1. The difference between age and salary would be a population regression slope because we would be noting the slope of the regression line on the given chart and as long as it did not have a slope of 0, our alternative hypothesis would be supported. This could be supported by either a positive slope, showing both an increase in age and salary, or a negative slope, showing increase in age but decrease in salary, either way proving a significant relationship. With a slope of 0, we would not have a significant relationship as there would be no change in salaries as the age increased. 
+
+2. For years of experience and salary, this would also be a population regression slope, for the same reason. We would be looking for a slope of not 0 to support the alternative hypothesis, and this again could be a positive slope showing an increase in YoE generally leads to an increase in salary, or a negative slope, showing an increase in YoE leads to a decrease in salary, proving a significant relationship. If there were to be a slope of 0, a significant relationship would not be possible to prove and the null hypothesis would be supported. 
+
+3. For Education level and Salary, this would be considered a difference in population means. Due to the fact that one of our variables, in this case, education level, is categorical and can have only a few set answers, while salary is numeric and could theoretically be any real number, when we compare these two the proper test is a differences of population means. 
+
+4. For Gender and Salary we have a similar resolution, we would be using the difference in population means to test the hypotheses. This is due to the fact that the Male and Female genders could be considered groups just like the education levels were considered groups, and salary is still numeric. Thus, the same test would be used. 
+
+# Results and Discussion [12 points]
+
+> In the code chunk below, run all the code necessary to carry out the analyses described above. [4 points]
+
+```{r}
+ggplot(Salary_Data, aes(x = Age, y = Salary)) +
+geom_point(color = "gray", size = 3, alpha = 0.6) +
+geom_smooth(method = "lm", se = TRUE, color = "blue") +
+labs(x = "Age", y = "Salary") +
+ geom_parallel_slopes(se = FALSE)
+
+model_age <- lm(Salary ~ Age, data = Salary_Data)
+summary(model_age)
+
+
+
+ggplot(Salary_Data, aes(x = `Years of Experience`, y = Salary)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+labs(x = "Years of Experience", y = "Salary") +
+  geom_parallel_slopes(se = FALSE)
+
+model_experience <- lm(Salary ~ `Years of Experience`, data = Salary_Data)
+summary(model_experience)
+
+
+
+ggplot(Salary_Data, aes(x = Age, y = Salary, color = `Education Level`)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+labs(x = "Age", y = "Salary", color = "Education Group", title = "Relationship Between Age and Salary", ) +
+  geom_parallel_slopes(se = FALSE)
+
+
+plot_data <- summary_salary %>%
+filter(!is.na(mean_salary))
+
+ggplot(plot_data, aes(x = Gender, y = mean_salary, fill = Gender)) +
+  geom_col(position = "dodge") +
+  labs(
+ title = "Average Salary by Education Level and Gender",
+    x = "Education Level",
+    y = "Average Salary ($)"
+  ) +
+  theme_minimal() +
+  theme(
+  plot.title = element_text(hjust = 0.5, face = "bold"),  
+ axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+plot_data <- summary_salary |>
+filter(!is.na(mean_salary))
+
+ggplot(plot_data, aes(x = `Education Level`, y = mean_salary, fill = Gender)) +
+  geom_col(position = "dodge") +
+  labs(
+ title = "Average Salary by Education Level and Gender",
+    x = "Education Level",
+    y = "Average Salary ($)"
+  ) +
+  theme_minimal() +
+  theme(
+  plot.title = element_text(hjust = 0.5, face = "bold"),  
+ axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+
+
+```
+
+
+> Interpret the results of your analyses (that is, describe what the results mean for your data and your hypotheses). [4 points]
+
+1. For the first section and hypothesis:
+Our null hypothesis was that there is no significant relationship between an employees age and their salary. Our Alternative hypothesis was that there is a significant relationship between an employees age and their salary. After using a population regression model slope and noting a positive slope, this would indicate that there is in fact a relationship between an employees age and their salary. I also calculated the P value for this hypothesis and the value was statistically significant at 2.2e-16 or 0.0 with 15 more 0's after it, then a 2. This indicates the mean salary differs by age. The r squared value for this section was 53%, indicating that about 53% of the differences in salaries between employees can be explained by their age. This would mean our alternative hypothesis is valid. 
+
+2. For section two and the hypothesis regarding years of experience and salary:
+Our null hypothesis for this was that years of experience of an employee has no significant effect on salary. Our alternative hypothesis was that years of experience of an employee does have a significant effect on their salary. After using a population regression model slope, and finding a positive slope, this would indicate that there is a significant effect on an employees salary by their years of experience. Statistically, I calculated the P value for this hypothesis as well and the P value was also 2.2e-16 so very low. The R squared for this was higher at 65%, meaning 65% of the variation in salary can be explained by employee experience. 
+
+3. For section three and the hypothesis regarding education level and salary:
+Our null hypothesis for this was that education level has no significant effect on salary. Our alternative hypothesis was that education level has a significant effect on salary. After using a difference in population means calculation, we notice that until around age 50 the PhD Level is the highest paid education level, then overtaken by Master's degree. This Validates our alternative hypothesis, specifically a higher education level results in a higher salary.
+
+4. For section four and the hypothesis regarding gender and salary:
+Our null hypothesis for this section was that gender has no significant effect on salary. Our alternative hypothesis was that gender does have a significant effect on salary. For testing this hypothesis I actually used two different graphs to analyze the data more clearly. The first one just comparing the total average salary of Males vs Females. In this chart we can see that males do have a higher average salary than females. The next graph I decided to analyze broke the salary data down into education levels by gender, and in every education level from high school through PhD, males made more than females. This is enough evidence for me to say our alternative hypothesis is valid. 
+
+
+> Please also discuss any practical implications of these results (that is, explain how people might wish to think or act differently based on these results). [2 points]
+
+Some practical implications could include, for Years of Experience as it relates to salary, this particularly reinforces the already widely accepted connection in every industry between experience and pay. Employers may use this when designing offers for new employees, or may decide to take other factors into account more than just simply relying on Years of Experience, such as licenses, practical skills, and the quality of the years of experience the employee has. Another implication could be reinforcing the notion that higher education typically results in higher salaries, or at least higher salary caps, especially in white collar industries where education is particularly rewarded. Finally, the gender and salary pay gap has been an important point of conversation in the last decade. Specifically due to more accurate statistics coming to light and women speaking up about the inequalities that they face. Having data to back up the persistent salary differences between men and women, at all education levels, across multiple industries, may indicated deeper systemic problems that could require organizations to conduct pay audits and restructure their compensation programs to more equally pay both genders. For employers, this could be a fork in the road for some employees and cause good talent to search elsewhere if they refuse to change or decide to ignore a problem like this. 
+
+> Describe any limitations of your data or your analyses. [2 points]
+
+There are several limitations with this data and my analysis.
+
+
+1. There were limited variables in the dataset. You would need an infinite number of variables constantly tracked and compared to accurately track compensation and that is just not possible. Some variables not considered in this dataset that would greatly effect the data are region, specific performance, company size, bonuses, and more. 
+
+2. The sample sizes could have been better. Though there were over 6600 usable samples in this dataset, for specific types, such as men who hold a PhD, or Women with a High School diploma, the sample size could have been too small compared to the other levels to accurately compare, and this would increase the uncertainty. 
+
+3. This is just a snapshot in time, in a certain area in the world, with certain people, and cannot show a change over time. With this data we are not able to track an individual employee's salary growth or educational growth and compare it to other employees, so the data is limited to people who have already made certain decisions. 
+
+
+
+# Submitting the Project
+
+After you've completed all parts of this assignment to your satisfaction, click on the `Knit` button in the toolbar at the top of this pane. When/if prompted, please indicate that you wish to knit to an HTML file. Knitting to PDF or Word are fancy tricks but take some more setting up, and that's beyond the scope of this class. 
+
+After RStudio has finished knitting the file, it will bring it up in a special RStudio interface. **You should use this interface to review the document and make sure that everything appears as you want.** Then, however, you should navigate to the same folder where you have stored this `.Rmd` file, and you will find a `.html` file with the same name in that same folder. You can open that file to view this in your browser; more importantly, this is the file that you should submit to Canvas to complete this assignment.
+
+I cannot accept any submission of your work besides the knit `.html` file! If you are having trouble knitting, please get in touch with me instead of submitting the `.Rmd` file and hoping it will work instead. Likewise, please don't attempt to manually convert this `.Rmd` file into an `.html` file—that will not work either.
+
+Speaking of having your data, though, it would be nice to have access to all the work you've done in addition to the `.html` file. Please open GitHub desktop, navigate to your repository for this class, *commit* the changes that you've made in completing this project, and *push* those changes to GitHub. I will also ask you to do this if you need any help along the way.
